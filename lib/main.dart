@@ -42,6 +42,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late FirebaseMessaging messaging;
   String? notificationText;
+  List<String> notificationHistory = [];
+
   @override
   void initState() {
     super.initState();
@@ -51,25 +53,35 @@ class _MyHomePageState extends State<MyHomePage> {
       print(value);
     });
     FirebaseMessaging.onMessage.listen((RemoteMessage event) {
-      print("message recieved");
+      print("message received");
       print(event.notification!.body);
       print(event.data.values);
+      setState(() {
+        notificationHistory.add(event.notification!.body!);
+      });
       showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Notification"),
-              content: Text(event.notification!.body!),
-              actions: [
-                TextButton(
-                  child: Text("Ok"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            );
-          });
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Notification"),
+            content: Text(event.notification!.body!),
+            actions: [
+              TextButton(
+                child: Text("View"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: Text("Dismiss"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     });
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       print('Message clicked!');
@@ -82,7 +94,22 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title!),
       ),
-      body: Center(child: Text("Messaging Tutorial")),
+      body: Column(
+        children: [
+          Center(child: Text("Messaging Tutorial")),
+          Expanded(
+            child: ListView.builder(
+              itemCount: notificationHistory.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: Icon(Icons.notifications),
+                  title: Text(notificationHistory[index]),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
